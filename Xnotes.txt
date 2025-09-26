@@ -1,0 +1,14 @@
+//Routes endpoints URL
+
+//1)express 2)app = express 3)server listens toPORT 4)app.get()...
+
+// http method= get,post,put,patch,delete
+
+to connect mogodb through mongoose
+mongo <---mongoose<--Application
+
+//Global error Handler
+                                 next()
+client-->Router-->Middleware-->multimiddleware-->requestHandler--|
+                                                  |
+                                        Response <-
