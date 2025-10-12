@@ -12,3 +12,20 @@ mongo <---mongoose<--Application
 client-->Router-->Middleware-->multimiddleware-->requestHandler--|
                                                   |
                                         Response <-
+
+
+now for the loacal host we will get req,res through this end point
+localhost:27017/api/users
+
+now to make a user router user/userRouter
+
+import express from "express";
+
+const userRouter = express.Router();
+
+export default userRouter
+
+to Create user we need to add this feature
+          //validation
+          //process
+          //response
