@@ -3,6 +3,7 @@ import createHttpError from 'http-errors';
 import globalErrorHandler from './middlewares/globalErrorHandler.js';
 import userRouter from './user/userRouter.js';
 
+
 const app: Application = express(); 
 app.use(express.json());
 //Routes endpoints URL
@@ -13,6 +14,7 @@ app.use(express.json());
 app.get('/',(req,res,next)=>{  //request handler
      res.json({message:"welcome to my api"});
 })
+
 
 app.use('/api/user',userRouter);
 
