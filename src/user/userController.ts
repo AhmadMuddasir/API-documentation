@@ -4,6 +4,7 @@ import userModel from "./userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { config } from "../config/config.js";
+import type { User } from "./userTypes.js";
 
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const { name, email, password } = req.body;
@@ -16,26 +17,51 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   }
   //database call
   // int findOne({}) parenthesis is filter(which record u want to search)
-  const user = await userModel.findOne({ email });
-  if (user) {
-    const error = createHttpError(400, "user Already exist");
-    return next(error);
-  }
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = await userModel.create({
-    name,
-    email,
-    password: hashedPassword,
-  });
-  //Token generation JWT//sign by default uses HS256 algorithm
-  const token = jwt.sign({ sub: newUser._id }, config.jwtSecret as string, {
-    expiresIn: "7d",
-    //optional
-    algorith:"HS256",
-  });
-  res.json({ accessToken: token });
 
-  //response
+  try {
+     
+       const user = await userModel.findOne({ email });
+       if (user) {
+         const error = createHttpError(400, "user Already exist");
+         return next(error);
+       }
+
+  } catch (error) {
+     return next(createHttpError(500,"error while getting user"))
+  }
+
+  let newUser:User;
+  try {
+    
+       const hashedPassword = await bcrypt.hash(password, 10);
+        newUser = await userModel.create({
+         name,
+         email,
+         password: hashedPassword,
+       });
+  } catch (error) {
+     return next(createHttpError(500,"error while creating user"))
+  }
+
+  try {   
+     //Token generation JWT//sign by default uses HS256 algorithm
+
+     const token = jwt.sign({ sub: newUser._id }, config.jwtSecret as string, {
+         expiresIn: "7d",});
+
+       res.status(201).json({ accessToken: token });
+
+  } catch (error) {
+     return next(createHttpError(500,"error while generating user"))
+  }
+
 };
 
+const loginUser = async(req: Request, res: Response, next: NextFunction)=>{
+
+     res.json({message:"OK"});
+
+}
+
 export { createUser };
+export { loginUser };
