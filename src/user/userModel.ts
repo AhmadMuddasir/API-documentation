@@ -20,4 +20,4 @@ const userSchema = new mongoose.Schema<User>({
 },
 {timestamps:true})
 
-export default  mongoose.model('User',userSchema);//its default name will be users
+export default  mongoose.model<User>('User',userSchema);//its default name will be users
