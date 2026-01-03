@@ -5,7 +5,10 @@ const createBook = async(
      res:Response,
      next:NextFunction
 )=>{
+
      res.json({});
 }
 
 export {createBook};
+
+//multer is used to handle multi part form data
