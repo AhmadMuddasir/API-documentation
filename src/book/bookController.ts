@@ -5,7 +5,7 @@ const createBook = async(
      res:Response,
      next:NextFunction
 )=>{
-
+     console.log('files',req.files);
      res.json({});
 }
 
