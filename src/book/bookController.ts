@@ -2,6 +2,8 @@ import path from "path";
 import fs from "fs";
 import type { Request, Response, NextFunction } from "express";
 import cloudinary from "../config/cloudinary.js";
+import createHttpError from "http-errors";
+import bookModel from "./bookModel.js";
 
 /**
  * Controller to handle the creation of a new book.
@@ -10,6 +12,8 @@ import cloudinary from "../config/cloudinary.js";
  */
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
     try {
+
+        const {title,genre} = req.body;
         // Cast req.files to expected Multer field structure
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -52,13 +56,28 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
             pdf: bookFileUploadResult.secure_url
         });
 
-        // Remove temporary local files to keep the server storage clean
+        // Remove temporary local files to keep the server storage clean;
+
+       
         try {
-            if (fs.existsSync(coverImageFilePath)) await fs.promises.unlink(coverImageFilePath);
-            if (fs.existsSync(bookFilePath)) await fs.promises.unlink(bookFilePath);
-        } catch (err) {
-            console.warn("Clean-up warning: Could not delete local temp files:", err);
-        }
+        
+        const newBook =  bookModel.create({
+            title,
+            genre,
+            author:'6911791f0a2b79d63cd6f6fd',
+            coverImage:uploadResult.secure_url,
+            file:bookFileUploadResult.secure_url
+        });
+        res.status(201).json({id:(await newBook)._id});
+        console.log(newBook);
+            await fs.promises.unlink(coverImageFilePath);
+            await fs.promises.unlink(bookFilePath);
+            //     if (fs.existsSync(coverImageFilePath)) await fs.promises.unlink(coverImageFilePath);
+            //     if (fs.existsSync(bookFilePath)) await fs.promises.unlink(bookFilePath);
+            } catch (err) {
+                    console.warn("Clean-up warning: Could not delete local temp files:", err);
+                }
+
 
         // 5. SUCCESS RESPONSE
         return res.status(201).json({
@@ -69,12 +88,10 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
             }
         });
 
+
     } catch (error) {
         console.error("Controller Error:", error);
-        return res.status(500).json({ 
-            message: "Server Error: Failed to process book upload.",
-            error: error instanceof Error ? error.message : "Unknown error"
-        });
+        return next(createHttpError('500','error while uploading files'))
     }
 };
 
