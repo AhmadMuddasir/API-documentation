@@ -70,6 +70,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
         });
         res.status(201).json({id:(await newBook)._id});
         console.log(newBook);
+            //deleting temorary files code 0.2
             await fs.promises.unlink(coverImageFilePath);
             await fs.promises.unlink(bookFilePath);
             //     if (fs.existsSync(coverImageFilePath)) await fs.promises.unlink(coverImageFilePath);
