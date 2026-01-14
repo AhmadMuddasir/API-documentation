@@ -11,7 +11,7 @@ import bookModel from "./bookModel.js";
  * and manages local file cleanup.
  */
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
-    try {
+   
 
         const {title,genre} = req.body;
         // Cast req.files to expected Multer field structure
@@ -56,7 +56,6 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
             pdf: bookFileUploadResult.secure_url
         });
 
-        // Remove temporary local files to keep the server storage clean;
 
        
         try {
@@ -64,36 +63,38 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
         const newBook =  bookModel.create({
             title,
             genre,
-            author:'6911791f0a2b79d63cd6f6fd',
+            author:'6911791f0a2b79d63cd6f6fd',//hard code
             coverImage:uploadResult.secure_url,
             file:bookFileUploadResult.secure_url
         });
-        res.status(201).json({id:(await newBook)._id});
-        console.log(newBook);
-            //deleting temorary files code 0.2
+
+        console.log("newBook",newBook);
+
+        //deleting temorary files code 0.2
+        try {
             await fs.promises.unlink(coverImageFilePath);
             await fs.promises.unlink(bookFilePath);
-            //     if (fs.existsSync(coverImageFilePath)) await fs.promises.unlink(coverImageFilePath);
-            //     if (fs.existsSync(bookFilePath)) await fs.promises.unlink(bookFilePath);
-            } catch (err) {
-                    console.warn("Clean-up warning: Could not delete local temp files:", err);
-                }
+        } catch (error) {
+             console.warn("Clean-up warning: Could not delete local temp files:", error);
+        }
 
-
-        // 5. SUCCESS RESPONSE
         return res.status(201).json({
-            message: "Book uploaded successfully",
-            files: {
-                coverImage: uploadResult.secure_url,
-                bookFile: bookFileUploadResult.secure_url
-            }
-        });
+            message:"Book created successfully",
+            id:(await newBook)._id,
+            data:{
+                 title:(await newBook).title,
+                coverImage:uploadResult.secure_url,
+                bookFile:bookFileUploadResult.secure_url
 
+            }
+        
+        },
+        );
 
     } catch (error) {
         console.error("Controller Error:", error);
         return next(createHttpError('500','error while uploading files'))
     }
-};
 
+}
 export { createBook };
