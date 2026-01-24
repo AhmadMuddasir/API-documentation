@@ -2,6 +2,7 @@ import express from "express";
 import path from "node:path";
 import { createBook } from "./bookController.js";
 import multer from "multer";
+import authenticate from "../middlewares/authenticate.js";
 
 const bookRouter = express.Router();
 
@@ -12,6 +13,7 @@ const upload = multer({
 
 bookRouter.post(
   "/",
+  authenticate,
   upload.fields([
     { name: "coverImage", maxCount: 1 },
     { name: "file", maxCount: 1 },

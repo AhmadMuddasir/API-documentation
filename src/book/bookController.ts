@@ -26,6 +26,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 
         // --- 2. HANDLE COVER IMAGE UPLOAD ---
         const coverImage = files.coverImage[0];
+
         const coverImageMimeType = coverImage.mimetype.split("/").at(-1);
         
         // Resolve absolute path for Cloudinary uploader
@@ -68,7 +69,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
             file:bookFileUploadResult.secure_url
         });
 
-        console.log("newBook",newBook);
+        console.log("newBook",await newBook);
 
         //deleting temorary files code 0.2
         try {
