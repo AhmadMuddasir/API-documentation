@@ -11,7 +11,7 @@ import bookModel from "./bookModel.js";
  * and manages local file cleanup.
  */
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
-   
+    
 
         const {title,genre} = req.body;
         // Cast req.files to expected Multer field structure
@@ -25,41 +25,52 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         // --- 2. HANDLE COVER IMAGE UPLOAD ---
-        const coverImage = files.coverImage[0];
-
-        const coverImageMimeType = coverImage.mimetype.split("/").at(-1);
-        
-        // Resolve absolute path for Cloudinary uploader
-        const coverImageFilePath = path.resolve(coverImage.path);
-
-        const uploadResult = await cloudinary.uploader.upload(coverImageFilePath, {
-            filename_override: coverImage.filename,
-            folder: 'book-covers',
-            format: coverImageMimeType
-        });
+        try {
+            const coverImage = files.coverImage[0];
+            if(!coverImage){
+                    return next(createHttpError(401,"err in bookfile"));
+                }
+    
+            const coverImageMimeType = coverImage.mimetype.split("/").at(-1);
+            
+            // Resolve absolute path for Cloudinary uploader
+            const coverImageFilePath = path.resolve(coverImage.path);
+            
+const uploadResult = await cloudinary.uploader.upload(coverImageFilePath, {
+    filename_override: coverImage.filename,
+    folder: 'book-covers',
+    ...(coverImageMimeType && { format: coverImageMimeType }), // Only adds 'format' if defined
+});
+            
+       
 
         // --- 3. HANDLE PDF FILE UPLOAD ---
-        const bookFileName = files.file[0];
-        const bookFilePath = path.resolve(bookFileName.path);
+       
+            const bookFileName = files.file[0];
+            if(!bookFileName){
+                return next(createHttpError(401,"err in bookfile"));
+            }
+            const bookFilePath = path.resolve(bookFileName.path);
+            
+            
+    
+            const bookFileUploadResult = await cloudinary.uploader.upload(bookFilePath, {
+                resource_type: "raw", // Required for PDF/Non-image files
+                filename_override: bookFileName.filename,
+                folder: "book-pdfs",
+                format: "pdf",
+            });
+    
+            // --- 4. LOGGING & CLEANUP ---
+            console.log('Cloudinary Upload Success:', {
+                image: uploadResult.secure_url,
+                pdf: bookFileUploadResult.secure_url
+            });
+             // @ts-ignore
+            console.log('userID:',req.userId)
 
        
-
-        const bookFileUploadResult = await cloudinary.uploader.upload(bookFilePath, {
-            resource_type: "raw", // Required for PDF/Non-image files
-            filename_override: bookFileName.filename,
-            folder: "book-pdfs",
-            format: "pdf",
-        });
-
-        // --- 4. LOGGING & CLEANUP ---
-        console.log('Cloudinary Upload Success:', {
-            image: uploadResult.secure_url,
-            pdf: bookFileUploadResult.secure_url
-        });
-
-
-       
-        try {
+      
         
         const newBook =  bookModel.create({
             title,
