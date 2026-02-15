@@ -5,6 +5,10 @@ import cloudinary from "../config/cloudinary.js";
 import createHttpError from "http-errors";
 import bookModel from "./bookModel.js";
 import { type AuthRequest } from "../middlewares/authenticate.js";
+import { fileURLToPath } from "url";
+// Create __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 /**
  * Controller to handle the creation of a new book.
  * Processes multi-part form data (images and PDFs), uploads them to Cloudinary,
@@ -69,7 +73,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     const newBook = bookModel.create({
       title,
       genre,
-      author: "6911791f0a2b79d63cd6f6fd", //hard code
+      author: "6991f56d538c729da7651c7b", //hard code
       coverImage: uploadResult.secure_url,
       file: bookFileUploadResult.secure_url,
     });
@@ -105,58 +109,59 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   const { title, genre } = req.body;
   const bookId = req.params.bookId;
-
+  console.log("bookid:", bookId);
+  
   const book = await bookModel.findOne({ _id: bookId });
   if (!book) {
     return next(createHttpError(404, "book not found"));
   }
+  
   //check access
   const _req = req as AuthRequest;
   if (book.author.toString() !== _req.userId) {
-    console.log("book id:",book.author.toString());
+    console.log("book id of author:", book.author.toString());
     return next(createHttpError(403, "you cannot update others book"));
   }
 
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-  let completeCoverImage = "";
+  let completeCoverImage = book.coverImage; // Default to existing
 
   if (files.coverImage) {
-    const filename = files.coverImage[0].filename;
-    const converMimeType = files.coverImage[0].mimetype.split("/").at(-1);
+    const coverImageFile = files.coverImage[0];
+    const converMimeType = coverImageFile.mimetype.split("/").at(-1);
 
+    // FIXED: Added missing slash
     const filePath = path.resolve(
       __dirname,
-      "../../public/data/uploads" + filename,
+      "../../public/data/uploads/" + coverImageFile.filename,
     );
 
-    completeCoverImage = filename; //name/png
     const uploadResult = await cloudinary.uploader.upload(filePath, {
-      filename_override: completeCoverImage,
+      filename_override: coverImageFile.filename,
       folder: "book-covers",
-      format:converMimeType
+      format: converMimeType,
     });
 
     completeCoverImage = uploadResult.secure_url;
     await fs.promises.unlink(filePath);
   }
 
-  let completeFileName = "";
+  let completeFileName = book.file; // Default to existing
 
   if (files.file) {
-    if (!files.file[0]) {
-      return createHttpError(501, "new error");
-    }
+    const pdfFile = files.file[0];
+    
+    // FIXED: Added missing slash
     const bookFilePath = path.resolve(
       __dirname,
-      "../../public/data/uploads" + files.file[0].filename,
+      "../../public/data/uploads/" + pdfFile.filename,
     );
-    const bookFileName = files.file[0]?.filename;
-    completeFileName = `${bookFileName}.pdf`;
 
     const uploadResultPdf = await cloudinary.uploader.upload(bookFilePath, {
       resource_type: "raw",
-      filename_override: completeFileName,
-      folder: "book-covers",
+      filename_override: pdfFile.filename,
+      folder: "book-pdfs", // Changed from "book-covers" to "book-pdfs" to match createBook
+      format: "pdf",
     });
 
     completeFileName = uploadResultPdf.secure_url;
@@ -170,8 +175,8 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     {
       title: title,
       genre: genre,
-      coverImage: completeCoverImage ? completeCoverImage : book.coverImage,
-      file: completeFileName ? completeFileName : book.file,
+      coverImage: completeCoverImage,
+      file: completeFileName,
     },
     { new: true },
   );
@@ -182,3 +187,4 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 export { createBook, updateBook };
 
 // middleware authentication after completing book
+//userID//6991f53e538c729da7651c79
