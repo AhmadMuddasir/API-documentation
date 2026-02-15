@@ -50,7 +50,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
        sub: newUser._id 
       },
       config.jwtSecret as string,{
-        expiresIn: "7d",});
+        expiresIn: "30d",});
 
        res.status(201).json({ accessToken: token });
 
@@ -79,7 +79,7 @@ const loginUser = async(req: Request, res: Response, next: NextFunction)=>{
     //create accesstoken
 
     const token = jwt.sign({sub:user._id},config.jwtSecret as string,{
-      expiresIn:"7d",
+      expiresIn:"30d",
       algorithm:"HS256",
     });
 
