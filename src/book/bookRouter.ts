@@ -1,6 +1,6 @@
 import express from "express";
 import path from "node:path";
-import { createBook, updateBook } from "./bookController.js";
+import { createBook, ListBooks, updateBook } from "./bookController.js";
 import multer from "multer";
 import authenticate from "../middlewares/authenticate.js";
 
@@ -23,12 +23,14 @@ bookRouter.post(
 // update using put or patch
 bookRouter.patch(
   "/:bookId",
-  authenticate,
+  authenticate,//authentication require
   upload.fields([
     { name: "coverImage", maxCount: 1 },
     { name: "file", maxCount: 1 },
   ]),
   updateBook
 );
+
+bookRouter.get("/books",ListBooks) ////no authentication required
 
 export default bookRouter;

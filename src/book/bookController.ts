@@ -110,12 +110,12 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   const { title, genre } = req.body;
   const bookId = req.params.bookId;
   console.log("bookid:", bookId);
-  
+
   const book = await bookModel.findOne({ _id: bookId });
   if (!book) {
     return next(createHttpError(404, "book not found"));
   }
-  
+
   //check access
   const _req = req as AuthRequest;
   if (book.author.toString() !== _req.userId) {
@@ -150,7 +150,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 
   if (files.file) {
     const pdfFile = files.file[0];
-    
+
     // FIXED: Added missing slash
     const bookFilePath = path.resolve(
       __dirname,
@@ -166,7 +166,17 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 
     completeFileName = uploadResultPdf.secure_url;
     await fs.promises.unlink(bookFilePath);
+    try {
+      await fs.promises.unlink(completeCoverImage);
+      await fs.promises.unlink(bookFilePath);
+    } catch (error) {
+      console.warn(
+        "Clean-up warning: Could not delete local temp files:",
+        error,
+      );
+    }
   }
+
 
   const updatedBook = await bookModel.findOneAndUpdate(
     {
@@ -184,7 +194,19 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   res.json(updatedBook);
 };
 
-export { createBook, updateBook };
+const ListBooks = async(req:Request,res:Response,next:NextFunction)=>{
+  try {
+    const book = await bookModel.find();
+
+      res.json(book);
+    } catch (error) {
+      return next(createHttpError(500,"error while getting a book"))
+
+    }
+
+}
+
+export { createBook, updateBook,ListBooks };
 
 // middleware authentication after completing book
 //userID//6991f53e538c729da7651c79
