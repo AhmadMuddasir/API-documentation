@@ -1,6 +1,6 @@
 import express from "express";
 import path from "node:path";
-import { createBook, ListBooks, updateBook } from "./bookController.js";
+import { createBook, getSinglebook, ListBooks, updateBook } from "./bookController.js";
 import multer from "multer";
 import authenticate from "../middlewares/authenticate.js";
 
@@ -32,5 +32,6 @@ bookRouter.patch(
 );
 
 bookRouter.get("/",ListBooks) ////no authentication required
+bookRouter.get("/:bookId",getSinglebook);
 
 export default bookRouter;
