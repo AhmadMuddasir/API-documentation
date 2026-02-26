@@ -31,6 +31,6 @@ bookRouter.patch(
   updateBook
 );
 
-bookRouter.get("/books",ListBooks) ////no authentication required
+bookRouter.get("/",ListBooks) ////no authentication required
 
 export default bookRouter;
