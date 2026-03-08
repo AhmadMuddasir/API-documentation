@@ -6,7 +6,7 @@ import createHttpError from "http-errors";
 import bookModel from "./bookModel.js";
 import { type AuthRequest } from "../middlewares/authenticate.js";
 
-const createBook = async (req: Request, res: Response, next: NextFunction) => {
+const createBook = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const { title, genre } = req.body;
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -25,6 +25,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     }
     const coverImageFilePath = path.resolve(coverImage.path); // Use Multer's path directly
     const coverImageMimeType = coverImage.mimetype.split("/").at(-1);
+    const authorId = req.userId;
 
     const uploadResult = await cloudinary.uploader.upload(coverImageFilePath, {
       filename_override: coverImage.filename,
@@ -50,20 +51,32 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     );
 
     // 3. Save to Database
+    console.log("authorId:",authorId)
+    if(!authorId){
+      return next(createHttpError(401,"user not authenticated"))
+    }
     const newBook = await bookModel.create({
       title,
       genre,
-      author: "6991f56d538c729da7651c7b", // Hardcoded for now
+      author: authorId, 
       coverImage: uploadResult.secure_url,
       file: bookFileUploadResult.secure_url,
     });
 
     // 4. Clean up local temporary files
     try {
-      await fs.promises.unlink(coverImageFilePath);
-      await fs.promises.unlink(bookFilePath);
+    console.log("Deleting cover image:", coverImageFilePath);
+    console.log("Deleting PDF file:", bookFilePath);
+      if(fs.existsSync(coverImageFilePath)){
+        await fs.promises.unlink(coverImageFilePath);
+        console.log("cover image deleted")
+      }
+      if(fs.existsSync(bookFilePath)){
+        await fs.promises.unlink(bookFilePath);
+        console.log("pdf file deleted")
+      }
     } catch (error) {
-      console.warn("Could not delete local temp files:", error);
+      console.error("Could not delete local temp files:", error);
     }
 
     return res.status(201).json({
@@ -71,6 +84,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
       id: newBook._id,
       data: {
         title: newBook.title,
+        author:newBook.author.toString(),
         coverImage: uploadResult.secure_url,
         bookFile: bookFileUploadResult.secure_url,
       },
@@ -197,8 +211,13 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
   //check access
 
   const _req = req as AuthRequest;
-  if (book.author.toString() !== _req.userId) {
-    return next(createHttpError(404, "you cannot update others book"));
+console.log("checking");
+console.log("Book author:", book.author.toString());
+console.log("Current user:", _req.userId);
+console.log("Author type:", typeof book.author.toString());
+console.log("UserId type:", typeof _req.userId);
+  if (book.author.toString().trim() !== _req.userId?.trim()) {
+    return next(createHttpError(403, "you cannot update others book"));
   }
   //book-covers/lqyygacxt8ygqrhljs7r
   //https://res.cloudinary.com/dewx7lgyd/image/upload/v1772080683/book-covers/lqyygacxt8ygqrhljs7r.png

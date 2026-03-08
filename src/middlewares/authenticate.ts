@@ -19,14 +19,15 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
   //to verify token
   try {
     const parsedToken = token.split(" ")[1] as string;
-      const decoded = verify(parsedToken, config.jwtSecret as string);
+      const decoded = verify(parsedToken, config.jwtSecret as string) as any;
       console.log("Decoded User ID (sub):", decoded.sub);
-      const _req = req as AuthRequest;
-      _req.userId = decoded.sub as string;
+      (req as AuthRequest).userId = decoded.sub;
       next();
     }
    catch (err) {
-    console.log(err)
+    console.error("🔐 Token verification failed:", err);
+    // 🔥 FIX: Actually return an error instead of just logging
+    return next(createHttpError(401, "Token is not valid"));
   }
 };
 // req.userId = decoded.sub

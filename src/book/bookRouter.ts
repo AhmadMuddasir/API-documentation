@@ -34,6 +34,6 @@ bookRouter.patch(
 bookRouter.get("/",ListBooks) ////no authentication required
 bookRouter.get("/:bookId",getSinglebook);
 
-bookRouter.delete("/:bookId",deleteBook);
+bookRouter.delete("/:bookId",authenticate,deleteBook);
 
 export default bookRouter;
